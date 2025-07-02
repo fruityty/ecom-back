@@ -29,16 +29,9 @@ webServer.use(express.json());
 // route registration
 webServer.use('/api/products', productRoutes);
 
-webServer.get('/api/product', (req, res) => {
-  res.json([
-    { id: 1, name: "Urban Stride Sneakers", price: 1800 },
-    { id: 2, name: "Classic Leather Boots", price: 2500 },
-    // ...more
-  ]);
-});
 
 async function startServer() {
-  await connectDB(); // Wait for MongoDB to connect first!
+  await connectDB(); // Wait for MongoDB to connect first
 
   webServer.listen(PORT, HOSTNAME, () => {
     console.log(`SERVER IS ONLINE => http://${HOSTNAME}:${PORT}`);

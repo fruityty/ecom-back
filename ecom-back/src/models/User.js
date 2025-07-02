@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   description: String, // you can add more fields here
 });
 
-const User = mongoose.model("User", userSchema);
+// collection Users
+const User = mongoose.model("User", userSchema, 'Users');
 
 export default User;

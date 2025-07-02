@@ -14,3 +14,8 @@ const productSchema = new mongoose.Schema({
     description: { type: String },
     colors: [{ type: String }]
 });
+
+// collection products
+const Product = mongoose.model("Product", productSchema, "products");
+
+export default Product;

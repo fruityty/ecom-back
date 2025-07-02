@@ -1,3 +1,5 @@
+import Product from '../models/Product.js';
+
 const initialProducts = [
     {
         id: 1,
@@ -145,25 +147,6 @@ const initialProducts = [
     }
 ];
 
-export const getAllProducts = (req, res) => {
-    // get all prodcuts
-    res.json(initialProducts);
-}
-
-export const getProductById = (req, res) => {
-    // Parse id from URL params (always string, convert to number if needed)
-    const id = Number(req.params.id);
-    const found = initialProducts.find((product) => product.id === id);
-
-    if (!found) {
-        return res.status(404).json({ error: "Product not found" });
-    }
-
-    res.json(found);
-};
-import { v4 as uuidv4 } from 'uuid'; //install 'uuid': npm install uuid
-            
-
 // Helper function to generate a random date within the last year
 const getRandomDate = () => {
     const endDate = new Date();
@@ -177,6 +160,11 @@ const getRandomDate = () => {
 // Helper function to pick a random element from an array
 const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+// Helper function to pick a random element from an array
+const getRandomElementArray = (arr) => {
+    const start_index = Math.floor(Math.random() * (arr.length-2))
+    return arr.slice(start_index, start_index+2);
+}
 // Possible values for new products
 const categories = ["Sneakers", "Boots", "Sandals", "Dress Shoes", "Running Shoes", "Loafers", "Slippers", "Casual Shoes", "Flats", "Athletic", "Work Shoes", "Kids Shoes"];
 const brands = [
@@ -198,6 +186,8 @@ const baseProductNames = [
 ];
 const shoeTypes = ["Sneakers", "Boots", "Sandals", "Oxfords", "Loafers", "Runners", "Heels", "Flats", "Mules", "Wedges"];
 
+const baseProductColors = [ '#FFFFFF', '#000000', '#C0C0C0', '#008000', '#FF0000', '#FFFF00' ];
+
 // Function to generate a single new product
 const generateNewProduct = (id) => {
     const category = getRandomElement(categories);
@@ -209,6 +199,7 @@ const generateNewProduct = (id) => {
     const imageText = `${category.replace(/\s/g, '')}-${id}`; // Image text based on category and id
     // const imageUrl = `https://placehold.co/400x400/${Math.floor(Math.random()*16777215).toString(16)}/${Math.floor(Math.random()*16777215).toString(16)}?text=${imageText}`;
     const imageUrl = `https://placehold.co/400x400/CCCCCC/333?text=${encodeURIComponent(name)}`
+    const colors = getRandomElementArray(baseProductColors);
     return {
         id: id, // Use the passed ID
         name: name,
@@ -217,28 +208,66 @@ const generateNewProduct = (id) => {
         category: category,
         brand: brand,
         createdAt: getRandomDate(),
-        salePercentage: getRandomElement(salePercentages)
+        salePercentage: getRandomElement(salePercentages),
+        colors: colors,
     };
 };
 
-function getMockProducts (productQuantity = 12) { // Default to 40
-    let allProducts = [...initialProducts]; // Start with your initial 12
 
-    // If you need more than the initial 12, generate them
-    for (let i = allProducts.length + 1; i <= productQuantity; i++) {
-        allProducts.push(generateNewProduct(i));
+// API -------------------------------------------------------
+// API -------------------------------------------------------
+// API -------------------------------------------------------
+// API -------------------------------------------------------
+
+// get all products
+export const getAllProducts = async (req, res) => {
+    // get all prodcuts
+    const allProdudcts = await Product.find({})
+    res.json(allProdudcts);
+}
+
+// get produdct by Id
+export const getProductById = async (req, res) => {
+    // Parse id from URL params (always string, convert to number if needed)
+    const id = Number(req.params.id);
+    const found = await Product.find({id:id});
+
+    if (!found) {
+        return res.status(404).json({ error: "Product not found" });
     }
 
-    // Ensure all products (initial and generated) have a random salePercentage
-    // In case the initial products didn't have one or you want to re-randomize
-    allProducts = allProducts.map(product => ({
-        ...product,
-        // Only assign if it doesn't exist, or re-randomize if you prefer
-        salePercentage: product.salePercentage === undefined
-                        ? getRandomElement(salePercentages)
-                        : product.salePercentage // Keep existing salePercentage or re-randomize
-    }));
+    res.json(found);
+};
 
-
-    return allProducts;
+// create mock product from mock list
+export const createMockProduct = async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        const newProductInList = initialProducts.find((p) => p.id === id)
+        const newMockProduct = new Product(newProductInList);
+        await newMockProduct.save(); 
+        console.log("save new product to mongodb")
+        res.json(newMockProduct);
+    
+    } catch (err) {
+        res.status(500).json({ error:err.message });
+    }
 }
+
+// create mock product by random new one
+export const createProduct = async (req, res) => {
+    try {
+        const lastProduct = await Product.findOne().sort({ id: -1 }).exec();
+        const lastId = lastProduct ? lastProduct.id : 0; // If collection is empty, start from 0
+        const newId = lastId + 1;
+        const newMockProduct = new Product(generateNewProduct(newId));
+        await newMockProduct.save(); 
+        console.log("save to mongodb")
+        res.json(newMockProduct);
+    
+    } catch (err) {
+        res.status(500).json({ error:err.message });
+    }
+}
+
+
